@@ -92,8 +92,9 @@ export function attachAudioGateway(server: http.Server): void {
         getFeedback(text, session.sceneName),
         evaluatePronunciation(audioBuffer, text),
       ])
-        .then(([feedback, iseScore]) => {
-          feedback.pronunciationScore = iseScore
+        .then(([feedback, iseResult]) => {
+          feedback.pronunciationScore = iseResult.score
+          feedback.phonemes = iseResult.phonemes
           userMsg.feedback = feedback
           send({ type: 'feedback', feedback })
         })
