@@ -5,6 +5,7 @@ import { XfyunSttSession } from '../services/xfyunSttService'
 import { SCENES } from '../data/scenes'
 import { storageService } from '../services/storageService'
 import { getAIReplyStream, getFeedback } from '../services/aiService'
+import { evaluatePronunciation } from '../services/xfyunIseService'
 import { Message } from '../types'
 
 // WebSocket message protocol
@@ -17,6 +18,7 @@ export function attachAudioGateway(server: http.Server): void {
   wss.on('connection', (client: WebSocket) => {
     let stt: XfyunSttSession | null = null
     let sessionId: string | null = null
+    const pcmChunks: Buffer[] = []
 
     const send = (data: object) => {
       if (client.readyState === WebSocket.OPEN) client.send(JSON.stringify(data))
@@ -24,7 +26,9 @@ export function attachAudioGateway(server: http.Server): void {
 
     client.on('message', (raw: RawData, isBinary: boolean) => {
       if (isBinary) {
-        stt?.sendChunk(raw as Buffer)
+        const chunk = raw as Buffer
+        stt?.sendChunk(chunk)
+        pcmChunks.push(chunk)
         return
       }
 
@@ -32,6 +36,7 @@ export function attachAudioGateway(server: http.Server): void {
 
       if (msg.type === 'start') {
         sessionId = msg.sessionId as string
+        pcmChunks.length = 0
         stt = new XfyunSttSession({
           onPartial: (text) => send({ type: 'partial', text }),
           onDone: (text) => {
@@ -56,6 +61,8 @@ export function attachAudioGateway(server: http.Server): void {
       if (!session) return
       const scene = SCENES.find((s) => s.id === session.sceneId)!
 
+      const audioBuffer = Buffer.concat(pcmChunks)
+
       const userMsg: Message = {
         id: uuidv4(),
         role: 'user',
@@ -72,8 +79,13 @@ export function attachAudioGateway(server: http.Server): void {
         send({ type: 'ai_done' })
       })
 
-      const feedbackDone = getFeedback(text, session.sceneName)
-        .then((feedback) => {
+      // Grammar corrections + ISE pronunciation score run in parallel
+      const feedbackDone = Promise.all([
+        getFeedback(text, session.sceneName),
+        evaluatePronunciation(audioBuffer, text),
+      ])
+        .then(([feedback, iseScore]) => {
+          feedback.pronunciationScore = iseScore
           userMsg.feedback = feedback
           send({ type: 'feedback', feedback })
         })
@@ -88,10 +100,15 @@ export function attachAudioGateway(server: http.Server): void {
         createdAt: new Date().toISOString(),
       }
 
-      storageService.updateSession(sessionId!, {
-        messages: [...historyWithUser, aiMsg],
-        avgScore: 0,
-      })
+      const updatedMessages = [...historyWithUser, aiMsg]
+      const scores = updatedMessages
+        .filter((m) => m.role === 'user' && m.feedback)
+        .map((m) => m.feedback!.pronunciationScore)
+      const avgScore = scores.length
+        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+        : 0
+
+      storageService.updateSession(sessionId!, { messages: updatedMessages, avgScore })
     }
 
     client.on('close', () => { stt = null })
