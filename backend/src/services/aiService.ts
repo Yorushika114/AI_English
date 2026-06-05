@@ -1,7 +1,10 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { Message, Feedback, Scene } from '../types'
 
-const client = new Anthropic()
+const client = new OpenAI({
+  apiKey: process.env.DEEPSEEK_API_KEY,
+  baseURL: 'https://api.deepseek.com'
+})
 
 export async function getAIReply(scene: Scene, history: Message[]): Promise<string> {
   const messages = history.map(m => ({
@@ -9,16 +12,47 @@ export async function getAIReply(scene: Scene, history: Message[]): Promise<stri
     content: m.text
   }))
 
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+  const response = await client.chat.completions.create({
+    model: 'deepseek-chat',
     max_tokens: 200,
-    system: scene.prompt,
-    messages
+    messages: [
+      { role: 'system', content: scene.prompt },
+      ...messages
+    ]
   })
 
-  const block = response.content[0]
-  if (block.type !== 'text') throw new Error('Unexpected response type from AI')
-  return block.text
+  return response.choices[0].message.content ?? ''
+}
+
+export async function getAIReplyStream(
+  scene: Scene,
+  history: Message[],
+  onChunk: (text: string) => void
+): Promise<string> {
+  const messages = history.map(m => ({
+    role: m.role === 'ai' ? 'assistant' as const : 'user' as const,
+    content: m.text
+  }))
+
+  const stream = await client.chat.completions.create({
+    model: 'deepseek-chat',
+    max_tokens: 200,
+    stream: true,
+    messages: [
+      { role: 'system', content: scene.prompt },
+      ...messages
+    ]
+  })
+
+  let full = ''
+  for await (const chunk of stream) {
+    const text = chunk.choices[0]?.delta?.content ?? ''
+    if (text) {
+      full += text
+      onChunk(text)
+    }
+  }
+  return full
 }
 
 export async function getFeedback(userText: string, sceneName: string): Promise<Feedback> {
@@ -28,7 +62,6 @@ Analyze: "${userText}"
 
 Respond ONLY with valid JSON, no markdown code fences, no extra text:
 {
-  "pronunciationScore": <integer 0-100, based on grammar and expression quality>,
   "corrections": [
     {
       "original": "<exact problematic phrase from the sentence>",
@@ -39,17 +72,35 @@ Respond ONLY with valid JSON, no markdown code fences, no extra text:
   ]
 }
 
-If the sentence is grammatically correct and natural, return an empty corrections array and a high score (85-100). Be encouraging.`
+If the sentence is grammatically correct and natural, return an empty corrections array. Be encouraging.`
 
-  const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+  const response = await client.chat.completions.create({
+    model: 'deepseek-chat',
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }]
   })
 
-  const block = response.content[0]
-  if (block.type !== 'text') throw new Error('Unexpected response type from AI')
+  const text = (response.choices[0].message.content ?? '').trim()
+  const parsed = JSON.parse(text) as { corrections: Feedback['corrections'] }
+  return { pronunciationScore: 0, corrections: parsed.corrections ?? [] }
+}
 
-  const text = block.text.trim()
-  return JSON.parse(text) as Feedback
+export async function getSessionSummary(
+  messages: Message[],
+  sceneName: string
+): Promise<string> {
+  const conversation = messages
+    .map(m => `${m.role === 'user' ? 'Student' : 'AI'}: ${m.text}`)
+    .join('\n')
+
+  const response = await client.chat.completions.create({
+    model: 'deepseek-chat',
+    max_tokens: 400,
+    messages: [{
+      role: 'user',
+      content: `你是一名英语口语教练。以下是学生在"${sceneName}"场景下的对话记录：\n\n${conversation}\n\n请用中文给出简洁的课后总结，包含：1.本次表现亮点 2.主要问题 3.下次练习建议。每项不超过2句话。`
+    }]
+  })
+
+  return (response.choices[0].message.content ?? '').trim()
 }

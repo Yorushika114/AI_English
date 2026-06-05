@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Scene, Message, Session } from '../types'
+import type { Scene, Message, Session, Feedback } from '../types'
 import { api } from '../api/client'
 
 type PracticeState = {
@@ -9,10 +9,21 @@ type PracticeState = {
   messages: Message[]
   isLoading: boolean
   isRecording: boolean
+  partialTranscript: string   // live STT text shown while user speaks
+  streamingAiText: string     // accumulates AI reply chunks
+
   loadScenes: () => Promise<void>
   setScene: (scene: Scene) => Promise<void>
   sendMessage: (text: string) => Promise<void>
   setIsRecording: (v: boolean) => void
+
+  // WebSocket voice flow handlers
+  handlePartial: (text: string) => void
+  handleTranscript: (text: string) => void
+  handleAiChunk: (chunk: string) => void
+  handleAiDone: () => void
+  handleFeedback: (feedback: Feedback) => void
+  handleTtsAudio: (base64: string) => void
 }
 
 export const usePracticeStore = create<PracticeState>((set, get) => ({
@@ -22,6 +33,8 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   messages: [],
   isLoading: false,
   isRecording: false,
+  partialTranscript: '',
+  streamingAiText: '',
 
   loadScenes: async () => {
     const scenes = await api.getScenes()
@@ -42,6 +55,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     }
   },
 
+  // Text-input path (unchanged)
   sendMessage: async (text) => {
     const { currentSession, currentScene } = get()
     if (!currentScene) return
@@ -62,5 +76,62 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     }
   },
 
-  setIsRecording: (v) => set({ isRecording: v })
+  setIsRecording: (v) => set({ isRecording: v }),
+
+  handlePartial: (text) => set({ partialTranscript: text }),
+
+  handleTranscript: (text) => {
+    const userMsg: Message = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      text,
+      createdAt: new Date().toISOString(),
+    }
+    set((s) => ({
+      messages: [...s.messages, userMsg],
+      partialTranscript: '',
+      streamingAiText: '',
+      isLoading: true,
+    }))
+  },
+
+  // AI reply arrives chunk by chunk
+  handleAiChunk: (chunk) => set((s) => ({ streamingAiText: s.streamingAiText + chunk })),
+
+  // AI reply complete → commit as message
+  handleAiDone: () => {
+    const { streamingAiText } = get()
+    const aiMsg: Message = {
+      id: crypto.randomUUID(),
+      role: 'ai',
+      text: streamingAiText,
+      createdAt: new Date().toISOString(),
+    }
+    set((s) => ({ messages: [...s.messages, aiMsg], streamingAiText: '', isLoading: false }))
+  },
+
+  handleTtsAudio: (base64) => {
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }))
+    const audio = new Audio(url)
+    audio.play().catch(() => {})
+    audio.onended = () => URL.revokeObjectURL(url)
+  },
+
+  // Grammar feedback arrives after AI reply — patch the last user message
+  handleFeedback: (feedback) => {
+    set((s) => {
+      const msgs = [...s.messages]
+      // Find last user message that has no feedback yet
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === 'user' && !msgs[i].feedback) {
+          msgs[i] = { ...msgs[i], feedback }
+          break
+        }
+      }
+      return { messages: msgs }
+    })
+  },
 }))

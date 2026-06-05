@@ -1,9 +1,11 @@
 import 'dotenv/config'
+import http from 'http'
 import express from 'express'
 import cors from 'cors'
 import scenesRouter from './routes/scenes'
 import sessionsRouter from './routes/sessions'
 import profileRouter from './routes/profile'
+import { attachAudioGateway } from './ws/audioGateway'
 
 const app = express()
 
@@ -18,9 +20,12 @@ app.use('/api/scenes', scenesRouter)
 app.use('/api/sessions', sessionsRouter)
 app.use('/api/profile', profileRouter)
 
+const server = http.createServer(app)
+attachAudioGateway(server)
+
 if (require.main === module) {
   const PORT = process.env.PORT || 3001
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Backend running on http://localhost:${PORT}`)
   })
 }
