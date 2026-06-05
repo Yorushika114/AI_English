@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { useProfileStore } from '../store/profileStore'
 
-const COLORS = ['#6C63FF', '#4ECDC4', '#FF6B6B', '#51CF66', '#FFD93D']
+const COLORS = ['#2563EB', '#64748B', '#DC2626', '#16A34A', '#D97706']
 
 export default function ProfilePage() {
   const { stats, isLoading, loadStats } = useProfileStore()
@@ -37,8 +37,8 @@ export default function ProfilePage() {
           { label: '对话条数', value: stats.totalMessages },
           { label: '平均评分', value: stats.avgScore }
         ].map(item => (
-          <div key={item.label} className="bg-white rounded-card p-4 shadow-sm text-center">
-            <div className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <div key={item.label} className="bg-white rounded-card p-4 border border-border text-center">
+            <div className="text-2xl font-bold text-primary">
               {item.value}
             </div>
             <div className="text-xs text-subtle mt-1">{item.label}</div>
@@ -47,21 +47,21 @@ export default function ProfilePage() {
       </div>
 
       {stats.scoreHistory.length > 1 && (
-        <div className="bg-white rounded-card p-4 shadow-sm">
+        <div className="bg-white rounded-card p-4 border border-border">
           <h3 className="font-semibold text-text mb-3 text-sm">评分趋势</h3>
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={stats.scoreHistory}>
               <XAxis dataKey="date" tick={{ fontSize: 10 }} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
               <Tooltip />
-              <Line type="monotone" dataKey="score" stroke="#6C63FF" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="score" stroke="#2563EB" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       )}
 
       {stats.sceneDistribution.length > 0 && (
-        <div className="bg-white rounded-card p-4 shadow-sm">
+        <div className="bg-white rounded-card p-4 border border-border">
           <h3 className="font-semibold text-text mb-3 text-sm">场景分布</h3>
           <div className="flex items-center gap-4">
             <ResponsiveContainer width={120} height={120}>
@@ -97,7 +97,7 @@ export default function ProfilePage() {
       )}
 
       {stats.topErrors.length > 0 && (
-        <div className="bg-white rounded-card p-4 shadow-sm">
+        <div className="bg-white rounded-card p-4 border border-border">
           <h3 className="font-semibold text-text mb-3 text-sm">常见纠错 Top 5</h3>
           {stats.topErrors.map((err, i) => (
             <div

@@ -18,7 +18,7 @@ export default function RecordButton({ isRecording, onToggle, disabled }: Props)
       className={`relative w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         isRecording
           ? 'bg-error text-white'
-          : 'bg-gradient-to-r from-primary to-secondary text-white'
+          : 'bg-primary text-white'
       }`}
     >
       {isRecording && (

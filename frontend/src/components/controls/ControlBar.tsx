@@ -59,7 +59,7 @@ export default function ControlBar() {
   const disabled = !currentScene || isLoading
 
   return (
-    <div className="bg-white border-t border-gray-100 p-4 shrink-0">
+    <div className="bg-white border-t border-border p-4 shrink-0">
       {isRecording && (
         <div className="flex justify-center mb-2">
           <WaveformVisualizer isRecording={isRecording} />
@@ -72,7 +72,7 @@ export default function ControlBar() {
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={disabled ? '请先在左上角菜单选择练习场景…' : '输入英文或点击麦克风说话…'}
-          className="flex-1 h-11 px-4 rounded-pill border border-gray-200 text-text placeholder:text-subtle text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:bg-bg disabled:cursor-not-allowed transition-colors"
+          className="flex-1 h-11 px-4 rounded-pill border border-border text-text placeholder:text-subtle text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:bg-bg disabled:cursor-not-allowed transition-colors"
         />
         <RecordButton isRecording={isRecording} onToggle={toggleRecording} disabled={disabled} />
         <motion.button
@@ -80,7 +80,7 @@ export default function ControlBar() {
           whileTap={{ scale: 0.95 }}
           onClick={handleSend}
           disabled={!text.trim() || disabled}
-          className="w-11 h-11 rounded-btn bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          className="w-11 h-11 rounded-btn bg-primary text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:bg-primary/90"
           aria-label="发送"
         >
           <Send size={18} />

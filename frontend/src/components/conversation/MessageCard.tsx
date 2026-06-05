@@ -9,12 +9,10 @@ export default function MessageCard({ message }: Props) {
   const isAI = message.role === 'ai'
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`bg-white rounded-card p-5 shadow-sm border-l-4 ${
-        isAI ? 'border-primary' : 'border-secondary'
-      }`}
+      transition={{ duration: 0.2 }}
+      className={`rounded-card p-4 border border-border ${isAI ? 'bg-white' : 'bg-bg'}`}
     >
       <MessageBubble role={message.role} text={message.text} />
       {message.feedback && <FeedbackBlock feedback={message.feedback} />}

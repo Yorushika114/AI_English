@@ -6,9 +6,9 @@ const scoreColor = (score: number) =>
   score >= 80 ? 'text-success' : score >= 60 ? 'text-yellow-500' : 'text-error'
 
 const typeBadgeClass: Record<string, string> = {
-  grammar: 'bg-blue-100 text-blue-700',
-  expression: 'bg-purple-100 text-purple-700',
-  pronunciation: 'bg-orange-100 text-orange-700'
+  grammar: 'bg-bg text-text border border-border',
+  expression: 'bg-bg text-text border border-border',
+  pronunciation: 'bg-bg text-text border border-border'
 }
 
 type Props = { feedback: Feedback }

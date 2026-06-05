@@ -21,7 +21,7 @@ function SessionCard({ session, selectMode, selected, onSelect, onDelete }: Sess
   const userMsgCount = session.messages.filter(m => m.role === 'user').length
 
   return (
-    <div className={`bg-white rounded-card shadow-sm overflow-hidden transition-all ${selected ? 'ring-2 ring-primary' : ''}`}>
+    <div className={`bg-white rounded-card border overflow-hidden transition-all ${selected ? 'border-primary' : 'border-border'}`}>
       <div className="flex items-center gap-1 px-2">
         {selectMode && (
           <button onClick={onSelect} className="shrink-0 p-1.5 text-primary">
@@ -73,8 +73,8 @@ function SessionCard({ session, selectMode, selected, onSelect, onDelete }: Sess
                   key={msg.id}
                   className={`text-sm p-3 rounded-lg ${
                     msg.role === 'ai'
-                      ? 'bg-primary/5 text-primary'
-                      : 'bg-secondary/5 text-text'
+                      ? 'bg-bg text-text'
+                      : 'bg-white border border-border text-text'
                   }`}
                 >
                   <span className="font-medium mr-2">
