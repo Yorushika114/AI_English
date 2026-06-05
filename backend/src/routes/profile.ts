@@ -5,7 +5,7 @@ import { Correction } from '../types'
 const router = Router()
 
 router.get('/stats', (_req, res) => {
-  const sessions = storageService.getSessions()
+  const sessions = storageService.getSessions().filter(s => s.messages.length > 0)
 
   const totalSessions = sessions.length
   const totalMessages = sessions.reduce((sum, s) => sum + s.messages.length, 0)

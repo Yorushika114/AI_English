@@ -7,12 +7,12 @@ import { usePracticeStore } from '../../store/practiceStore'
 
 export default function ControlBar() {
   const [text, setText] = useState('')
-  const { sendMessage, isLoading, isRecording, setIsRecording, currentSession } = usePracticeStore()
+  const { sendMessage, isLoading, isRecording, setIsRecording, currentScene } = usePracticeStore()
   const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   const handleSend = async () => {
     const trimmed = text.trim()
-    if (!trimmed || isLoading || !currentSession) return
+    if (!trimmed || isLoading || !currentScene) return
     setText('')
     await sendMessage(trimmed)
   }
@@ -56,7 +56,7 @@ export default function ControlBar() {
     setIsRecording(true)
   }
 
-  const disabled = !currentSession || isLoading
+  const disabled = !currentScene || isLoading
 
   return (
     <div className="bg-white border-t border-gray-100 p-4 shrink-0">

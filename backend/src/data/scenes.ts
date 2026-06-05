@@ -2,6 +2,12 @@ import { Scene } from '../types'
 
 export const SCENES: Scene[] = [
   {
+    id: 'free-talk',
+    name: '正常对话',
+    description: '自由英语对话，练习日常交流',
+    prompt: "You are a friendly English conversation partner. Chat naturally about any topic the user brings up — daily life, hobbies, opinions, or anything else. Keep your responses conversational and to 1-2 sentences. Gently correct serious grammar mistakes by including the correct form naturally in your reply, without being preachy."
+  },
+  {
     id: 'job-interview',
     name: '求职面试',
     description: '模拟英语面试，练习自我介绍和常见问题',
