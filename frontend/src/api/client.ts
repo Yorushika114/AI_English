@@ -60,5 +60,11 @@ export const api = {
     requestVoid('/sessions', {
       method: 'DELETE',
       body: JSON.stringify({ ids })
-    })
+    }),
+
+  phonemeAnalysis: (sessionId: string, messageId: string) =>
+    request<import('../types').PhonemeAnalysisResult>(
+      `/sessions/${sessionId}/messages/${messageId}/phoneme-analysis`,
+      { method: 'POST' }
+    ),
 }
