@@ -90,8 +90,9 @@ export default function PhonemeAnalysis({ text, analysis }: Props) {
           <p className="font-medium text-subtle">连读参考</p>
           <ul className="space-y-0.5">
             {analysis.linkedSpeech.map((item, i) => (
-              <li key={i} className="font-mono text-blue-700 bg-blue-50 rounded px-2 py-0.5">
-                {item}
+              <li key={i} className="text-blue-700 bg-blue-50 rounded px-2 py-0.5">
+                <span className="font-mono">{item.example}</span>
+                <span className="text-subtle ml-1">({item.context} · {item.rule})</span>
               </li>
             ))}
           </ul>
