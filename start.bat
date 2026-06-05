@@ -1,72 +1,93 @@
 @echo off
 chcp 65001 >nul 2>&1
+title AI 英语口语陪练助手
 
 echo ========================================
-echo   AI 英语口语陪练助手 - 后端启动
+echo   AI 英语口语陪练助手 - 一键启动
 echo ========================================
 echo.
 
-cd /d "%~dp0backend"
-
 :: ── 1. 检查 Node.js ──────────────────────────────────
-echo [检查] Node.js...
+echo [1/5] 检查 Node.js...
 node --version >nul 2>&1
 if errorlevel 1 (
-    echo [错误] 未检测到 Node.js，请先安装 Node.js 18+
-    echo        下载地址: https://nodejs.org/
+    echo       [错误] 未检测到 Node.js，请先安装 Node.js 18+
+    echo       下载地址: https://nodejs.org/
     pause
     exit /b 1
 )
-for /f "delims=" %%v in ('node --version') do echo        %%v 已就绪
+for /f "delims=" %%v in ('node --version') do echo       %%v 已就绪
 
-:: ── 2. 检查 npm 依赖 ─────────────────────────────────
-echo [检查] node_modules...
-if not exist "node_modules" (
-    echo        未找到，正在安装依赖...
+:: ── 2. 安装后端依赖 ───────────────────────────────────
+echo [2/5] 检查后端依赖...
+if not exist "%~dp0backend\node_modules" (
+    echo       未找到，正在安装...
+    pushd "%~dp0backend"
     npm install
     if errorlevel 1 (
-        echo [错误] npm install 失败，请检查网络连接后重试
+        echo       [错误] 后端 npm install 失败
         pause
         exit /b 1
     )
-    echo        依赖安装完成
+    popd
+    echo       安装完成
 ) else (
-    echo        已存在，跳过安装
+    echo       已就绪
 )
 
-:: ── 3. 检查 .env ──────────────────────────────────────
-echo [检查] .env...
-if not exist ".env" (
-    copy ".env.example" ".env" >nul
-    echo        已从 .env.example 自动复制
-    echo.
-    echo [操作] 请在打开的记事本中填入你的 ANTHROPIC_API_KEY，保存后重新运行此脚本。
-    echo.
-    start notepad ".env"
-    pause
-    exit /b 0
+:: ── 3. 安装前端依赖 ───────────────────────────────────
+echo [3/5] 检查前端依赖...
+if not exist "%~dp0frontend\node_modules" (
+    echo       未找到，正在安装...
+    pushd "%~dp0frontend"
+    npm install
+    if errorlevel 1 (
+        echo       [错误] 前端 npm install 失败
+        pause
+        exit /b 1
+    )
+    popd
+    echo       安装完成
+) else (
+    echo       已就绪
 )
-echo        已存在
 
-:: ── 4. 检查 API Key 是否已填写 ───────────────────────
-echo [检查] ANTHROPIC_API_KEY...
-findstr /C:"ANTHROPIC_API_KEY=your_key_here" ".env" >nul 2>&1
+:: ── 4. 检查 .env ──────────────────────────────────────
+echo [4/5] 检查 backend/.env...
+if not exist "%~dp0backend\.env" (
+    copy "%~dp0backend\.env.example" "%~dp0backend\.env" >nul
+    echo       已自动创建，请在打开的记事本中填入 ANTHROPIC_API_KEY
+    echo       保存后关闭记事本，再按任意键继续...
+    echo.
+    start /wait notepad "%~dp0backend\.env"
+)
+
+findstr /C:"ANTHROPIC_API_KEY=your_key_here" "%~dp0backend\.env" >nul 2>&1
 if not errorlevel 1 (
-    echo        [错误] 仍为默认占位值，请编辑 backend\.env 填入真实 Key
+    echo       [错误] ANTHROPIC_API_KEY 仍为默认值，请编辑 backend\.env 后重新运行
     pause
     exit /b 1
 )
-findstr /C:"ANTHROPIC_API_KEY=" ".env" >nul 2>&1
-if errorlevel 1 (
-    echo        [错误] .env 中未找到 ANTHROPIC_API_KEY 字段，请检查文件内容
-    pause
-    exit /b 1
-)
-echo        已配置
+echo       已配置
 
-:: ── 5. 启动 ──────────────────────────────────────────
+:: ── 5. 启动服务 ───────────────────────────────────────
+echo [5/5] 启动服务...
 echo.
-echo [启动] 后端服务启动中（端口 3001）...
-echo [提示] 按 Ctrl+C 可停止服务
+
+start "后端 :3001" cmd /k "chcp 65001 >nul && cd /d "%~dp0backend" && npm run dev"
+timeout /t 3 /nobreak >nul
+
+start "前端 :5173" cmd /k "chcp 65001 >nul && cd /d "%~dp0frontend" && npm run dev"
+timeout /t 4 /nobreak >nul
+
+start http://localhost:5173
+
+echo ========================================
+echo   启动完成！
+echo   后端: http://localhost:3001
+echo   前端: http://localhost:5173
+echo ========================================
 echo.
-npm run dev
+echo   关闭服务：直接关闭"后端"和"前端"两个窗口
+echo.
+pause
