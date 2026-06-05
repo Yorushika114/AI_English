@@ -1,5 +1,6 @@
 import WebSocket from 'ws'
 import crypto from 'crypto'
+import { WordPhonemeData, PhonemeScore } from '../types'
 
 function buildIseAuthUrl(): string {
   const host = 'ise-api.xfyun.cn'
@@ -19,31 +20,68 @@ function buildIseAuthUrl(): string {
   )
 }
 
-const FRAME_SIZE = 1280  // 40ms @ 16kHz 16-bit mono
-const MIN_AUDIO_BYTES = 16000  // skip ISE if < 0.5s of audio
+function getAttr(str: string, attr: string): string {
+  const m = str.match(new RegExp(`\\b${attr}="([^"]*)"`)  )
+  return m ? m[1] : ''
+}
 
-export function evaluatePronunciation(audioBuffer: Buffer, referenceText: string): Promise<number> {
-  if (!referenceText.trim() || audioBuffer.length < MIN_AUDIO_BYTES) return Promise.resolve(0)
+export function parseIseXml(xmlStr: string): WordPhonemeData[] {
+  const words: WordPhonemeData[] = []
+  const wordBlockRegex = /<word\b([^>]*)>([\s\S]*?)<\/word>/g
+  let wordMatch: RegExpExecArray | null
+  while ((wordMatch = wordBlockRegex.exec(xmlStr)) !== null) {
+    const wordAttrs = wordMatch[1]
+    const wordContent = wordMatch[2]
+    const wordText = getAttr(wordAttrs, 'content')
+    const wordAcc = parseFloat(getAttr(wordAttrs, 'accuracy_score') || '0')
+    if (!wordText) continue
+
+    const phonemes: PhonemeScore[] = []
+    const phoneRegex = /<phone\b([^>]*)\/>/g
+    let phoneMatch: RegExpExecArray | null
+    while ((phoneMatch = phoneRegex.exec(wordContent)) !== null) {
+      const pa = phoneMatch[1]
+      phonemes.push({
+        symbol: getAttr(pa, 'content'),
+        score: parseFloat(getAttr(pa, 'accuracy_score') || '0'),
+        dpResult: parseInt(getAttr(pa, 'dp_result') || '0', 10),
+        stress: parseInt(getAttr(pa, 'stress') || '0', 10),
+      })
+    }
+    words.push({ word: wordText, accuracyScore: wordAcc, phonemes })
+  }
+  return words
+}
+
+const FRAME_SIZE = 1280
+const MIN_AUDIO_BYTES = 16000
+
+export function evaluatePronunciation(
+  audioBuffer: Buffer,
+  referenceText: string
+): Promise<{ score: number; phonemes: WordPhonemeData[] }> {
+  if (!referenceText.trim() || audioBuffer.length < MIN_AUDIO_BYTES) {
+    return Promise.resolve({ score: 0, phonemes: [] })
+  }
 
   return new Promise((resolve) => {
     let settled = false
-    const done = (score: number) => {
+    const done = (score: number, phonemes: WordPhonemeData[]) => {
       if (settled) return
       settled = true
-      resolve(score)
+      resolve({ score, phonemes })
     }
 
     let ws: WebSocket
     try {
       ws = new WebSocket(buildIseAuthUrl())
     } catch {
-      return done(0)
+      return done(0, [])
     }
 
-    const timeout = setTimeout(() => { ws.terminate(); done(0) }, 15000)
+    const timeout = setTimeout(() => { ws.terminate(); done(0, []) }, 15000)
 
     ws.on('open', () => {
-      // Frame 1: config (cmd=ssb), data.data must be empty string
       ws.send(JSON.stringify({
         common: { app_id: process.env.XFYUN_APP_ID },
         business: {
@@ -59,7 +97,6 @@ export function evaluatePronunciation(audioBuffer: Buffer, referenceText: string
         data: { status: 0, data: '' },
       }))
 
-      // Audio frames: cmd=auw in business, audio in data.data, aus=1/2/4
       let offset = 0
       let isFirstAudio = true
       while (offset < audioBuffer.length) {
@@ -78,7 +115,7 @@ export function evaluatePronunciation(audioBuffer: Buffer, referenceText: string
     ws.on('message', (raw: Buffer) => {
       try {
         const msg = JSON.parse(raw.toString())
-        if (msg.code !== 0) { clearTimeout(timeout); ws.close(); done(0); return }
+        if (msg.code !== 0) { clearTimeout(timeout); ws.close(); done(0, []); return }
         if (msg.data?.status === 2) {
           clearTimeout(timeout)
           ws.close(1000)
@@ -88,14 +125,15 @@ export function evaluatePronunciation(audioBuffer: Buffer, referenceText: string
           const accuracy = accMatch ? parseFloat(accMatch[1]) : 0
           const fluency = fluMatch ? parseFloat(fluMatch[1]) : 0
           const score = Math.round(((accuracy + fluency) / 2) * 20)
-          done(Math.min(100, Math.max(0, score)))
+          const phonemes = parseIseXml(xmlStr)
+          done(Math.min(100, Math.max(0, score)), phonemes)
         }
       } catch {
-        clearTimeout(timeout); ws.close(); done(0)
+        clearTimeout(timeout); ws.close(); done(0, [])
       }
     })
 
-    ws.on('error', () => { clearTimeout(timeout); done(0) })
-    ws.on('close', () => { clearTimeout(timeout); done(0) })
+    ws.on('error', () => { clearTimeout(timeout); done(0, []) })
+    ws.on('close', () => { clearTimeout(timeout); done(0, []) })
   })
 }
