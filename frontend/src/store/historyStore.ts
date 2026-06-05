@@ -6,6 +6,8 @@ type HistoryState = {
   sessions: Session[]
   isLoading: boolean
   loadSessions: () => Promise<void>
+  deleteSession: (id: string) => Promise<void>
+  deleteSessions: (ids: string[]) => Promise<void>
 }
 
 export const useHistoryStore = create<HistoryState>((set) => ({
@@ -15,8 +17,19 @@ export const useHistoryStore = create<HistoryState>((set) => ({
     set({ isLoading: true })
     const sessions = await api.getSessions()
     set({
-      sessions: sessions.sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
+      sessions: sessions
+        .filter(s => s.messages.length > 0)
+        .sort((a, b) => b.startedAt.localeCompare(a.startedAt)),
       isLoading: false
     })
+  },
+  deleteSession: async (id: string) => {
+    set(state => ({ sessions: state.sessions.filter(s => s.id !== id) }))
+    await api.deleteSession(id)
+  },
+  deleteSessions: async (ids: string[]) => {
+    const idSet = new Set(ids)
+    set(state => ({ sessions: state.sessions.filter(s => !idSet.has(s.id)) }))
+    await api.deleteSessions(ids)
   }
 }))

@@ -40,5 +40,19 @@ export const storageService = {
     db.sessions[idx] = { ...db.sessions[idx], ...updates }
     write(db)
     return db.sessions[idx]
+  },
+  deleteSession(id: string): boolean {
+    const db = read()
+    const before = db.sessions.length
+    db.sessions = db.sessions.filter(s => s.id !== id)
+    if (db.sessions.length === before) return false
+    write(db)
+    return true
+  },
+  deleteSessions(ids: string[]): void {
+    const set = new Set(ids)
+    const db = read()
+    db.sessions = db.sessions.filter(s => !set.has(s.id))
+    write(db)
   }
 }
