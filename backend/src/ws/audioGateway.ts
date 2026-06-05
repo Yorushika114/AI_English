@@ -6,12 +6,14 @@ import { SCENES } from '../data/scenes'
 import { storageService } from '../services/storageService'
 import { getAIReplyStream, getFeedback } from '../services/aiService'
 import { evaluatePronunciation } from '../services/xfyunIseService'
+import { analyzeProsody } from '../services/prosodyService'
 import { synthesize } from '../services/xfyunTtsService'
 import { Message } from '../types'
 
 // WebSocket message protocol
 // Client → Server: { type: 'start', sessionId: string } | { type: 'stop' } | <binary PCM>
 // Server → Client: { type: 'partial'|'transcript'|'ai_chunk'|'ai_done'|'feedback'|'tts_audio'|'error', ...}
+// feedback message: { type: 'feedback', feedback: Feedback, hasPhonemicsData: boolean }
 
 export function attachAudioGateway(server: http.Server): void {
   const wss = new WebSocketServer({ server, path: '/ws/audio' })
@@ -79,7 +81,6 @@ export function attachAudioGateway(server: http.Server): void {
       }).then((full) => {
         aiText = full
         send({ type: 'ai_done' })
-        // TTS runs after ai_done, doesn't block feedback or storage
         synthesize(full)
           .then((audioBuf) => {
             if (audioBuf.length > 0) send({ type: 'tts_audio', data: audioBuf.toString('base64') })
@@ -87,15 +88,24 @@ export function attachAudioGateway(server: http.Server): void {
           .catch(() => {})
       })
 
-      // Grammar corrections + ISE pronunciation score run in parallel
+      // Grammar corrections + ISE phoneme scoring + Python prosody — all in parallel
       const feedbackDone = Promise.all([
         getFeedback(text, session.sceneName),
         evaluatePronunciation(audioBuffer, text),
+        analyzeProsody(audioBuffer, text),
       ])
-        .then(([feedback, { score }]) => {
+        .then(([feedback, { score, phonemes }, prosody]) => {
           feedback.pronunciationScore = score
           userMsg.feedback = feedback
-          send({ type: 'feedback', feedback })
+          userMsg.phonemicsData = {
+            isePhonemes: phonemes,
+            prosody,
+          }
+          send({
+            type: 'feedback',
+            feedback,
+            hasPhonemicsData: phonemes.length > 0,
+          })
         })
         .catch(() => {})
 
