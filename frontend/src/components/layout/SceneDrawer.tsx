@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePracticeStore } from '../../store/practiceStore'
 
 const EMOJI: Record<string, string> = {
+  'free-talk': '💬',
   'job-interview': '💼',
   'restaurant': '🍽️',
   'business-meeting': '📊',
