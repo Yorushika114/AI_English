@@ -1,0 +1,6 @@
+fastapi==0.111.0
+uvicorn==0.29.0
+pyworld==0.3.4
+cmudict==1.0.2
+numpy==1.26.4
+setuptools<71
