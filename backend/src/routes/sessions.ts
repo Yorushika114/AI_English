@@ -102,4 +102,23 @@ router.post('/:id/message', async (req: Request, res: Response) => {
   res.json({ userMessage: userMsg, aiMessage: aiMsg })
 })
 
+router.delete('/:id', (req: Request, res: Response) => {
+  const deleted = storageService.deleteSession(req.params.id as string)
+  if (!deleted) {
+    res.status(404).json({ error: 'Session not found' })
+    return
+  }
+  res.status(204).send()
+})
+
+router.delete('/', (req: Request, res: Response) => {
+  const { ids } = req.body as { ids?: string[] }
+  if (!Array.isArray(ids) || ids.length === 0) {
+    res.status(400).json({ error: 'ids array is required' })
+    return
+  }
+  storageService.deleteSessions(ids)
+  res.status(204).send()
+})
+
 export default router

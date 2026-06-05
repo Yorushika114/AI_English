@@ -21,6 +21,17 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json()
 }
 
+async function requestVoid(path: string, options?: RequestInit): Promise<void> {
+  const res = await fetch(`/api${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `API error ${res.status}`)
+  }
+}
+
 export const api = {
   getScenes: () => request<Scene[]>('/scenes'),
 
@@ -40,5 +51,14 @@ export const api = {
 
   getSession: (id: string) => request<Session>(`/sessions/${id}`),
 
-  getProfileStats: () => request<ProfileStats>('/profile/stats')
+  getProfileStats: () => request<ProfileStats>('/profile/stats'),
+
+  deleteSession: (id: string) =>
+    requestVoid(`/sessions/${id}`, { method: 'DELETE' }),
+
+  deleteSessions: (ids: string[]) =>
+    requestVoid('/sessions', {
+      method: 'DELETE',
+      body: JSON.stringify({ ids })
+    })
 }
