@@ -1,6 +1,7 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import base64
+import binascii
 import numpy as np
 
 try:
@@ -31,7 +32,12 @@ def health():
 
 @app.post("/analyze")
 def analyze(req: AnalyzeRequest):
-    pcm_bytes = base64.b64decode(req.audio_base64)
+    if len(req.audio_base64) > 2_000_000:  # ~12s of 16kHz PCM
+        raise HTTPException(status_code=413, detail="audio too large")
+    try:
+        pcm_bytes = base64.b64decode(req.audio_base64)
+    except (binascii.Error, ValueError):
+        raise HTTPException(status_code=422, detail="invalid base64 audio")
     samples = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float64) / 32768.0
 
     intonation = {"pattern": "level", "f0Mean": 0.0, "f0Trend": 0.0}
