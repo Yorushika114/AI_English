@@ -27,6 +27,7 @@ export async function analyzeProsody(
         let data = ''
         res.on('data', (chunk) => (data += chunk))
         res.on('end', () => {
+          if (res.statusCode !== 200) { resolve(null); return }
           try {
             resolve(JSON.parse(data) as ProsodyData)
           } catch {

@@ -5,11 +5,16 @@ import { storageService } from '../services/storageService'
 import { getAIReply, getFeedback, getPhonemeAnalysis } from '../services/aiService'
 import { Session, Message } from '../types'
 
+const stripPhonemics = (session: Session): Session => ({
+  ...session,
+  messages: session.messages.map(({ phonemicsData: _pd, ...m }) => m as Message),
+})
+
 const router = Router()
 
 router.get('/', (_req: Request, res: Response) => {
   const sessions = storageService.getSessions()
-  res.json(sessions)
+  res.json(sessions.map(stripPhonemics))
 })
 
 router.post('/', (req: Request, res: Response) => {
@@ -38,7 +43,7 @@ router.get('/:id', (req: Request, res: Response) => {
     res.status(404).json({ error: 'Session not found' })
     return
   }
-  res.json(session)
+  res.json(stripPhonemics(session))
 })
 
 router.post('/:id/end', (req: Request, res: Response) => {
