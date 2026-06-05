@@ -22,7 +22,7 @@ type PracticeState = {
   handleTranscript: (text: string) => void
   handleAiChunk: (chunk: string) => void
   handleAiDone: () => void
-  handleFeedback: (feedback: Feedback, hasPhonemicsData?: boolean) => void
+  handleFeedback: (feedback: Feedback, hasPhonemicsData?: boolean, backendMessageId?: string) => void
   handleTtsAudio: (base64: string) => void
   handleError: () => void
 }
@@ -124,13 +124,17 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   handleError: () => set({ isLoading: false, streamingAiText: '' }),
 
   // Grammar feedback arrives after AI reply — patch the last user message
-  handleFeedback: (feedback, hasPhonemicsData) => {
+  handleFeedback: (feedback, hasPhonemicsData, backendMessageId) => {
     set((s) => {
       const msgs = [...s.messages]
-      // Find last user message that has no feedback yet
       for (let i = msgs.length - 1; i >= 0; i--) {
         if (msgs[i].role === 'user' && !msgs[i].feedback) {
-          msgs[i] = { ...msgs[i], feedback, hasPhonemicsData }
+          msgs[i] = {
+            ...msgs[i],
+            id: backendMessageId ?? msgs[i].id,
+            feedback,
+            hasPhonemicsData,
+          }
           break
         }
       }

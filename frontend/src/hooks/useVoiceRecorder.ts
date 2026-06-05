@@ -6,7 +6,7 @@ export type WsMessage =
   | { type: 'transcript'; text: string }
   | { type: 'ai_chunk'; text: string }
   | { type: 'ai_done' }
-  | { type: 'feedback'; feedback: Feedback; hasPhonemicsData?: boolean }
+  | { type: 'feedback'; feedback: Feedback; hasPhonemicsData?: boolean; messageId?: string }
   | { type: 'tts_audio'; data: string }
   | { type: 'error'; message: string }
 

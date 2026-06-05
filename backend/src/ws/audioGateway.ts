@@ -105,6 +105,7 @@ export function attachAudioGateway(server: http.Server): void {
             type: 'feedback',
             feedback,
             hasPhonemicsData: phonemes.length > 0,
+            messageId: userMsg.id,
           })
         })
         .catch(() => {})

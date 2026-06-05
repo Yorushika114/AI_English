@@ -32,7 +32,7 @@ export default function ControlBar() {
       case 'transcript': handleTranscript(msg.text); break
       case 'ai_chunk':   handleAiChunk(msg.text); break
       case 'ai_done':    handleAiDone(); break
-      case 'feedback':   handleFeedback(msg.feedback, msg.hasPhonemicsData); break
+      case 'feedback':   handleFeedback(msg.feedback, msg.hasPhonemicsData, msg.messageId); break
       case 'tts_audio':  handleTtsAudio(msg.data); break
       case 'error':      console.error('Voice error:', msg.message); setIsRecording(false); handleError(); break
     }
