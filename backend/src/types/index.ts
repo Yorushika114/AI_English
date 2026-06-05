@@ -17,7 +17,6 @@ export type Correction = {
 export type Feedback = {
   pronunciationScore: number
   corrections: Correction[]
-  phonemes?: WordPhonemeData[]
 }
 
 // --- Phoneme analysis types ---
