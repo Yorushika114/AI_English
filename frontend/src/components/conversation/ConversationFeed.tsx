@@ -2,14 +2,14 @@ import { useEffect, useRef } from 'react'
 import MessageCard from './MessageCard'
 import type { Message } from '../../types'
 
-type Props = { messages: Message[]; isLoading: boolean }
+type Props = { messages: Message[]; isLoading: boolean; streamingAiText?: string }
 
-export default function ConversationFeed({ messages, isLoading }: Props) {
+export default function ConversationFeed({ messages, isLoading, streamingAiText }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length, isLoading])
+  }, [messages.length, streamingAiText])
 
   if (messages.length === 0 && !isLoading) {
     return (
@@ -26,7 +26,13 @@ export default function ConversationFeed({ messages, isLoading }: Props) {
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
       {messages.map(msg => <MessageCard key={msg.id} message={msg} />)}
-      {isLoading && (
+      {streamingAiText && (
+        <MessageCard
+          key="__streaming__"
+          message={{ id: '__streaming__', role: 'ai', text: streamingAiText, createdAt: '' }}
+        />
+      )}
+      {isLoading && !streamingAiText && (
         <div className="bg-white rounded-card p-5 border border-border animate-pulse">
           <div className="flex gap-3 items-center">
             <div className="w-7 h-7 rounded-btn bg-bg shrink-0" />

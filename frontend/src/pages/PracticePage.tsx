@@ -4,7 +4,7 @@ import ControlBar from '../components/controls/ControlBar'
 import { usePracticeStore } from '../store/practiceStore'
 
 export default function PracticePage() {
-  const { messages, isLoading, loadScenes } = usePracticeStore()
+  const { messages, isLoading, streamingAiText, loadScenes } = usePracticeStore()
 
   useEffect(() => {
     loadScenes()
@@ -12,7 +12,7 @@ export default function PracticePage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <ConversationFeed messages={messages} isLoading={isLoading} />
+      <ConversationFeed messages={messages} isLoading={isLoading} streamingAiText={streamingAiText} />
       <ControlBar />
     </div>
   )
