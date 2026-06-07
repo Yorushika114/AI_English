@@ -7,6 +7,7 @@ import { storageService } from '../services/storageService'
 import { getAIReplyStream, getFeedback } from '../services/aiService'
 import { evaluatePronunciation } from '../services/xfyunIseService'
 import { analyzeProsody } from '../services/prosodyService'
+import { extractPronunciationIssues } from '../utils/pronunciationHints'
 import { synthesize } from '../services/xfyunTtsService'
 import { Message } from '../types'
 
@@ -100,6 +101,7 @@ export function attachAudioGateway(server: http.Server): void {
             feedback.phonemeAccuracyScore = Math.round(
               phonemes.reduce((sum, w) => sum + w.accuracyScore, 0) / phonemes.length
             )
+            feedback.pronunciationIssues = extractPronunciationIssues(phonemes)
           }
           userMsg.feedback = feedback
           userMsg.phonemicsData = {

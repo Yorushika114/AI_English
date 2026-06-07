@@ -14,10 +14,23 @@ export type Correction = {
   explanation: string
 }
 
+export type SyllableIssue = {
+  ipa: string       // IPA representation, e.g. "θɪŋk"
+  score: number     // 0-100
+  dpResult: number  // 0=correct 16=inserted 32=missing 64=substituted
+}
+
+export type PronunciationIssue = {
+  word: string
+  score: number
+  syllables: SyllableIssue[]
+}
+
 export type Feedback = {
   pronunciationScore: number
   phonemeAccuracyScore?: number
   corrections: Correction[]
+  pronunciationIssues?: PronunciationIssue[]
 }
 
 // --- Phoneme analysis types ---
