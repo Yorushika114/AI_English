@@ -2,6 +2,14 @@
 
 > 第三批议题 · 题目一（XEngineer 新工科计划 · 七牛云 Hackathon）
 
+## Demo 视频
+
+[![Demo 视频](https://img.shields.io/badge/▶%20观看%20Demo-Bilibili-00A1D6?style=for-the-badge&logo=bilibili)](https://www.bilibili.com/video/BV16GEb6aEWS/)
+
+> 视频链接：https://www.bilibili.com/video/BV16GEb6aEWS/
+
+---
+
 ## 项目概述
 
 基于网页的英语口语练习工具，帮助用户在 5 个真实场景中进行英文对话训练。Claude AI 驱动对话回复和语法/表达内联纠错，每条用户消息下方即时展示评分与建议。
@@ -97,4 +105,6 @@ cd frontend && npx vitest run
 
 ## Demo 视频
 
-[待上传]
+[![Demo 视频](https://img.shields.io/badge/▶%20观看%20Demo-Bilibili-00A1D6?style=for-the-badge&logo=bilibili)](https://www.bilibili.com/video/BV16GEb6aEWS/)
+
+> https://www.bilibili.com/video/BV16GEb6aEWS/
