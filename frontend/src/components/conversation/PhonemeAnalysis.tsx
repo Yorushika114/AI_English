@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Volume2, Loader2 } from 'lucide-react'
+import { useTtsPlayer } from '../../hooks/useTtsPlayer'
 import type { PhonemeAnalysisResult } from '../../types'
 
 type Props = {
@@ -15,6 +17,23 @@ const severityStyle: Record<string, string> = {
 
 const bandColor = (band: number) =>
   band >= 7 ? 'text-success' : band >= 5 ? 'text-yellow-600' : 'text-error'
+
+function PlayButton({ text }: { text: string }) {
+  const { play, isPlaying } = useTtsPlayer()
+  return (
+    <button
+      onClick={() => play(text)}
+      disabled={isPlaying}
+      title="播放示例"
+      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-primary hover:bg-primary/10 transition-colors disabled:opacity-40 shrink-0"
+    >
+      {isPlaying
+        ? <Loader2 size={11} className="animate-spin" />
+        : <Volume2 size={11} />
+      }
+    </button>
+  )
+}
 
 export default function PhonemeAnalysis({ text, analysis }: Props) {
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
@@ -75,7 +94,10 @@ export default function PhonemeAnalysis({ text, analysis }: Props) {
 
       {/* Intonation */}
       <div className="bg-gray-50 rounded-lg p-2 text-xs space-y-0.5">
-        <p className="font-medium text-subtle">语调分析</p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-medium text-subtle">语调分析</p>
+          <PlayButton text={text} />
+        </div>
         <p className="text-text">{analysis.intonation.suggestion}</p>
         {analysis.intonation.expected && (
           <p className="text-subtle">
@@ -90,9 +112,10 @@ export default function PhonemeAnalysis({ text, analysis }: Props) {
           <p className="font-medium text-subtle">连读参考</p>
           <ul className="space-y-0.5">
             {analysis.linkedSpeech.map((item, i) => (
-              <li key={i} className="text-blue-700 bg-blue-50 rounded px-2 py-0.5">
+              <li key={i} className="flex items-center gap-1.5 text-blue-700 bg-blue-50 rounded px-2 py-0.5">
                 <span className="font-mono">{item.example}</span>
-                <span className="text-subtle ml-1">({item.context} · {item.rule})</span>
+                <span className="text-subtle">({item.context} · {item.rule})</span>
+                <PlayButton text={item.context} />
               </li>
             ))}
           </ul>

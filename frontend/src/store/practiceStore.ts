@@ -19,7 +19,7 @@ type PracticeState = {
 
   // WebSocket voice flow handlers
   handlePartial: (text: string) => void
-  handleTranscript: (text: string) => void
+  handleTranscript: (text: string, audioUrl?: string | null) => void
   handleAiChunk: (chunk: string) => void
   handleAiDone: () => void
   handleFeedback: (feedback: Feedback, hasPhonemicsData?: boolean, backendMessageId?: string) => void
@@ -81,11 +81,12 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
 
   handlePartial: (text) => set({ partialTranscript: text }),
 
-  handleTranscript: (text) => {
+  handleTranscript: (text, audioUrl) => {
     const userMsg: Message = {
       id: crypto.randomUUID(),
       role: 'user',
       text,
+      audioUrl: audioUrl ?? undefined,
       createdAt: new Date().toISOString(),
     }
     set((s) => ({
@@ -116,9 +117,18 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     const bytes = new Uint8Array(binary.length)
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
     const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/mpeg' }))
-    const audio = new Audio(url)
-    audio.play().catch(() => {})
-    audio.onended = () => URL.revokeObjectURL(url)
+    new Audio(url).play().catch(() => {})
+    // Keep URL alive for replay; store on the last AI message
+    set((s) => {
+      const msgs = [...s.messages]
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === 'ai') {
+          msgs[i] = { ...msgs[i], audioUrl: url }
+          break
+        }
+      }
+      return { messages: msgs }
+    })
   },
 
   handleError: () => set({ isLoading: false, streamingAiText: '' }),

@@ -49,6 +49,7 @@ export type Message = {
   text: string
   feedback?: Feedback
   hasPhonemicsData?: boolean   // set by handleFeedback when backend has stored phonemics data
+  audioUrl?: string            // blob URL of recorded/TTS audio, for replay
   createdAt: string
 }
 

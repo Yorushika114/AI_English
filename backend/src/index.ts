@@ -5,6 +5,7 @@ import cors from 'cors'
 import scenesRouter from './routes/scenes'
 import sessionsRouter from './routes/sessions'
 import profileRouter from './routes/profile'
+import ttsRouter from './routes/tts'
 import { attachAudioGateway } from './ws/audioGateway'
 
 const app = express()
@@ -19,6 +20,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/scenes', scenesRouter)
 app.use('/api/sessions', sessionsRouter)
 app.use('/api/profile', profileRouter)
+app.use('/api/tts', ttsRouter)
 
 const server = http.createServer(app)
 attachAudioGateway(server)
