@@ -23,6 +23,7 @@ export default function ControlBar() {
     handleAiDone,
     handleFeedback,
     handleTtsAudio,
+    handleError,
   } = usePracticeStore()
 
   const onMessage = useCallback((msg: WsMessage) => {
@@ -31,11 +32,11 @@ export default function ControlBar() {
       case 'transcript': handleTranscript(msg.text); break
       case 'ai_chunk':   handleAiChunk(msg.text); break
       case 'ai_done':    handleAiDone(); break
-      case 'feedback':   handleFeedback(msg.feedback); break
+      case 'feedback':   handleFeedback(msg.feedback, msg.hasPhonemicsData, msg.messageId); break
       case 'tts_audio':  handleTtsAudio(msg.data); break
-      case 'error':      console.error('Voice error:', msg.message); setIsRecording(false); break
+      case 'error':      console.error('Voice error:', msg.message); setIsRecording(false); handleError(); break
     }
-  }, [handlePartial, handleTranscript, handleAiChunk, handleAiDone, handleFeedback, handleTtsAudio, setIsRecording])
+  }, [handlePartial, handleTranscript, handleAiChunk, handleAiDone, handleFeedback, handleTtsAudio, setIsRecording, handleError])
 
   const { start, stop } = useVoiceRecorder({
     sessionId: currentSession?.id ?? '',

@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { Message, Feedback, Scene } from '../types'
+import { Message, Feedback, Scene, StoredPhonemicsData, PhonemeAnalysisResult } from '../types'
 
 const client = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY,
@@ -103,4 +103,73 @@ export async function getSessionSummary(
   })
 
   return (response.choices[0].message.content ?? '').trim()
+}
+
+export async function getPhonemeAnalysis(
+  text: string,
+  phonemicsData: StoredPhonemicsData
+): Promise<PhonemeAnalysisResult> {
+  const problemWords = phonemicsData.isePhonemes
+    .filter((w) => w.accuracyScore < 80)
+    .map((w) => ({
+      word: w.word,
+      score: Math.round(w.accuracyScore),
+      badPhonemes: w.phonemes
+        .filter((p) => p.score < 70 || p.dpResult !== 0)
+        .map((p) => `${p.symbol}(${Math.round(p.score)})`),
+    }))
+
+  const prosodySummary = phonemicsData.prosody
+    ? `Intonation: ${phonemicsData.prosody.intonation.pattern} (trend: ${phonemicsData.prosody.intonation.f0Trend.toFixed(1)} Hz/frame)
+Expected word stress: ${phonemicsData.prosody.wordStress
+        .map((w) => `${w.word}:[${w.phones.join(',')}]`)
+        .join(', ')}`
+    : 'Prosody data unavailable'
+
+  const prompt = `You are an IELTS pronunciation coach (targeting Band 7+). Analyze this English learner's speech.
+
+Sentence spoken: "${text}"
+
+ISE Phoneme Issues (words scoring below 80/100):
+${problemWords.length > 0 ? JSON.stringify(problemWords, null, 2) : 'None detected — overall pronunciation is good'}
+
+${prosodySummary}
+
+Respond ONLY with valid JSON (no markdown code fences, no extra text):
+{
+  "wordAnalysis": [
+    {
+      "word": "<exact word from sentence>",
+      "severity": "good|warning|error",
+      "ipa": "<IPA transcription e.g. /ɪmˈpɔːrtənt/>",
+      "issue": "<用中文描述具体发音问题，或 null>",
+      "suggestion": "<用中文说明如何纠正，或 null>"
+    }
+  ],
+  "intonation": {
+    "pattern": "<rising|falling|level|complex>",
+    "expected": "<what this sentence type needs>",
+    "suggestion": "<advice in Chinese, 1-2 sentences>"
+  },
+  "linkedSpeech": [
+    { "example": "<linked form e.g. wanna>", "context": "<words e.g. want to>", "rule": "<rule e.g. 弱读>" }
+  ],
+  "ieltsComment": "<2-3 sentences in Chinese from IELTS examiner perspective>",
+  "overallBand": <integer 4-9>
+}
+
+Rules:
+- wordAnalysis must include EVERY word from the sentence
+- Use "good" for words with no issues
+- linkedSpeech: list 1-3 realistic linking opportunities in this sentence (even if student didn't make errors — teach the standard)
+- overallBand: estimate based on phoneme scores and prosody`
+
+  const response = await client.chat.completions.create({
+    model: 'deepseek-chat',
+    max_tokens: 1000,
+    messages: [{ role: 'user', content: prompt }],
+  })
+
+  const raw = (response.choices[0].message.content ?? '').trim()
+  return JSON.parse(raw) as PhonemeAnalysisResult
 }

@@ -15,7 +15,14 @@ export default function MessageCard({ message }: Props) {
       className={`rounded-card p-4 border border-border ${isAI ? 'bg-white' : 'bg-bg'}`}
     >
       <MessageBubble role={message.role} text={message.text} />
-      {message.feedback && <FeedbackBlock feedback={message.feedback} />}
+      {message.feedback && (
+        <FeedbackBlock
+          feedback={message.feedback}
+          messageId={message.id}
+          text={message.text}
+          hasPhonemicsData={message.hasPhonemicsData}
+        />
+      )}
     </motion.div>
   )
 }

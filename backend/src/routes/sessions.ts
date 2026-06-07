@@ -2,14 +2,19 @@ import { Router, Request, Response } from 'express'
 import { v4 as uuidv4 } from 'uuid'
 import { SCENES } from '../data/scenes'
 import { storageService } from '../services/storageService'
-import { getAIReply, getFeedback } from '../services/aiService'
+import { getAIReply, getFeedback, getPhonemeAnalysis } from '../services/aiService'
 import { Session, Message } from '../types'
+
+const stripPhonemics = (session: Session): Session => ({
+  ...session,
+  messages: session.messages.map(({ phonemicsData: _pd, ...m }) => m as Message),
+})
 
 const router = Router()
 
 router.get('/', (_req: Request, res: Response) => {
   const sessions = storageService.getSessions()
-  res.json(sessions)
+  res.json(sessions.map(stripPhonemics))
 })
 
 router.post('/', (req: Request, res: Response) => {
@@ -38,7 +43,7 @@ router.get('/:id', (req: Request, res: Response) => {
     res.status(404).json({ error: 'Session not found' })
     return
   }
-  res.json(session)
+  res.json(stripPhonemics(session))
 })
 
 router.post('/:id/end', (req: Request, res: Response) => {
@@ -100,6 +105,32 @@ router.post('/:id/message', async (req: Request, res: Response) => {
   storageService.updateSession(req.params.id as string, { messages: updatedMessages, avgScore })
 
   res.json({ userMessage: userMsg, aiMessage: aiMsg })
+})
+
+router.post('/:id/messages/:msgId/phoneme-analysis', async (req: Request, res: Response) => {
+  const session = storageService.getSession(req.params.id as string)
+  if (!session) {
+    res.status(404).json({ error: 'Session not found' })
+    return
+  }
+
+  const message = session.messages.find((m) => m.id === req.params.msgId)
+  if (!message) {
+    res.status(404).json({ error: 'Message not found' })
+    return
+  }
+
+  if (!message.phonemicsData || message.phonemicsData.isePhonemes.length === 0) {
+    res.status(422).json({ error: 'No phonemics data for this message' })
+    return
+  }
+
+  try {
+    const analysis = await getPhonemeAnalysis(message.text, message.phonemicsData)
+    res.json(analysis)
+  } catch {
+    res.status(500).json({ error: 'Phoneme analysis failed' })
+  }
 })
 
 router.delete('/:id', (req: Request, res: Response) => {
