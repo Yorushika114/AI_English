@@ -42,7 +42,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
     set({ scenes })
     const { currentScene } = get()
     if (!currentScene && scenes.length > 0) {
-      set({ currentScene: scenes[0] })
+      await get().setScene(scenes[0])
     }
   },
 
