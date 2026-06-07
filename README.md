@@ -101,8 +101,8 @@ cd frontend && npx vitest run
 
 ## 已知限制
 
-- 语音识别仅支持 Chrome/Edge（Web Speech API 限制）
-- 发音评分为 LLM 文本质量估算，非声学发音评测
+- 语音识别与发音评测依赖讯飞 API，需配置有效的 XFYUN_APP_ID / API_KEY / API_SECRET
+- 讯飞 ISE 评测需音频时长足够（过短的录音会跳过评分）
 - 桌面端优先，最小宽度 768px
 - 数据存储为本地 JSON 文件，无多用户支持
 - 生产环境需单独部署并配置 CORS 与 HTTPS
