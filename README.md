@@ -36,7 +36,7 @@
 | 图表 | Recharts |
 | 图标 | Lucide React |
 | 后端 | Node.js + Express 5 + TypeScript |
-| AI | @anthropic-ai/sdk (claude-haiku-4-5-20251001) |
+| AI | @anthropic-ai/sdk (claude-4-5-20251001) |
 | 存储 | JSON 文件（`backend/data/db.json`） |
 | 前端测试 | Vitest + React Testing Library |
 | 后端测试 | Jest + Supertest |
@@ -103,8 +103,4 @@ cd frontend && npx vitest run
 - 数据存储为本地 JSON 文件，无多用户支持
 - 生产环境需单独部署并配置 CORS 与 HTTPS
 
-## Demo 视频
 
-[![Demo 视频](https://img.shields.io/badge/▶%20观看%20Demo-Bilibili-00A1D6?style=for-the-badge&logo=bilibili)](https://www.bilibili.com/video/BV16GEb6aEWS/)
-
-> https://www.bilibili.com/video/BV16GEb6aEWS/
