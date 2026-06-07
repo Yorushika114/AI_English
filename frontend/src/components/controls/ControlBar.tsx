@@ -71,6 +71,10 @@ export default function ControlBar() {
       return
     }
     setVoiceError(null)
+    if (!currentSession) {
+      setVoiceError('会话未就绪，请稍等片刻再试')
+      return
+    }
     try {
       await start()
       setIsRecording(true)
