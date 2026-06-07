@@ -43,7 +43,11 @@
 
 ## 语音说明
 
-语音识别使用浏览器原生 **Web Speech API**（`window.SpeechRecognition` / `window.webkitSpeechRecognition`），**仅支持 Chrome/Edge**。发音评分为 Claude Haiku 对文本语法与表达质量的估算分（0-100），并非专业声学发音评测模型。
+语音识别与发音评测均使用**科大讯飞**服务：
+
+- **语音转文字（STT）**：讯飞实时语音转写 WebSocket API
+- **发音评测（ISE）**：讯飞智能语音评测，对用户录音进行声学分析，返回准确度分、流畅度分及音节级错误（多读 / 漏读 / 替换），评分区间 0-100
+- **AI 对话与语法纠错**：DeepSeek 大语言模型（OpenAI 兼容接口）
 
 ## 原创实现
 
