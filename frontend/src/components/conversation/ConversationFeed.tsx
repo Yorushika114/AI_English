@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, Fragment } from 'react'
 import MessageCard from './MessageCard'
 import type { Message } from '../../types'
 
-type Props = { messages: Message[]; isLoading: boolean; streamingAiText?: string }
+type Props = { messages: Message[]; isLoading: boolean; streamingAiText?: string; resumedMessageCount?: number }
 
-export default function ConversationFeed({ messages, isLoading, streamingAiText }: Props) {
+export default function ConversationFeed({ messages, isLoading, streamingAiText, resumedMessageCount = 0 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -25,7 +25,18 @@ export default function ConversationFeed({ messages, isLoading, streamingAiText 
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-      {messages.map(msg => <MessageCard key={msg.id} message={msg} />)}
+      {messages.map((msg, i) => (
+        <Fragment key={msg.id}>
+          {resumedMessageCount > 0 && i === resumedMessageCount && (
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-subtle shrink-0">继续对话</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          )}
+          <MessageCard message={msg} />
+        </Fragment>
+      ))}
       {streamingAiText && (
         <MessageCard
           key="__streaming__"
