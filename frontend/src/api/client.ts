@@ -67,4 +67,10 @@ export const api = {
       `/sessions/${sessionId}/messages/${messageId}/phoneme-analysis`,
       { method: 'POST' }
     ),
+
+  synthesize: (text: string) =>
+    request<{ audio: string }>('/tts', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
 }

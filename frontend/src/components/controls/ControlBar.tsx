@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Send } from 'lucide-react'
 import RecordButton from './RecordButton'
@@ -9,6 +9,7 @@ import { useVoiceRecorder, type WsMessage } from '../../hooks/useVoiceRecorder'
 export default function ControlBar() {
   const [text, setText] = useState('')
   const [voiceError, setVoiceError] = useState<string | null>(null)
+  const pendingAudioUrlRef = useRef<string | null>(null)
   const {
     sendMessage,
     isLoading,
@@ -29,7 +30,7 @@ export default function ControlBar() {
   const onMessage = useCallback((msg: WsMessage) => {
     switch (msg.type) {
       case 'partial':    handlePartial(msg.text); break
-      case 'transcript': handleTranscript(msg.text); break
+      case 'transcript': handleTranscript(msg.text, pendingAudioUrlRef.current); pendingAudioUrlRef.current = null; break
       case 'ai_chunk':   handleAiChunk(msg.text); break
       case 'ai_done':    handleAiDone(); break
       case 'feedback':   handleFeedback(msg.feedback, msg.hasPhonemicsData, msg.messageId); break
@@ -65,7 +66,7 @@ export default function ControlBar() {
 
   const toggleRecording = async () => {
     if (isRecording) {
-      stop()
+      pendingAudioUrlRef.current = stop()
       setIsRecording(false)
       return
     }
