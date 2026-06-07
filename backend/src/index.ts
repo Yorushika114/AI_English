@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import http from 'http'
+import path from 'path'
 import express from 'express'
 import cors from 'cors'
 import scenesRouter from './routes/scenes'
@@ -21,6 +22,14 @@ app.use('/api/scenes', scenesRouter)
 app.use('/api/sessions', sessionsRouter)
 app.use('/api/profile', profileRouter)
 app.use('/api/tts', ttsRouter)
+
+if (process.env.NODE_ENV === 'production') {
+  const frontendDist = path.join(__dirname, '../../frontend/dist')
+  app.use(express.static(frontendDist))
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(frontendDist, 'index.html'))
+  })
+}
 
 const server = http.createServer(app)
 attachAudioGateway(server)

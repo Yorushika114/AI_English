@@ -55,7 +55,8 @@ export function useVoiceRecorder({ sessionId, onMessage }: Options) {
   const start = useCallback(async () => {
     pcmChunksRef.current = []
 
-    const wsUrl = `ws://${location.host}/ws/audio`
+    const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws'
+    const wsUrl = `${wsProtocol}://${location.host}/ws/audio`
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

@@ -2,6 +2,8 @@
   "name": "ai-english-practice",
   "private": true,
   "scripts": {
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend && npm run build --prefix backend",
+    "start": "node backend/dist/index.js",
     "dev": "concurrently -n backend,frontend -c cyan,green \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
