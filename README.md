@@ -2,10 +2,12 @@
 
 > 第三批议题 · 题目一（XEngineer 新工科计划 · 七牛云 Hackathon）
 
-## Demo 视频
+## 在线体验 & Demo 视频
 
+[![在线体验](https://img.shields.io/badge/🚀%20在线体验-Railway-7B2FBE?style=for-the-badge)](https://aienglish-production-c27e.up.railway.app/)
 [![Demo 视频](https://img.shields.io/badge/▶%20观看%20Demo-Bilibili-00A1D6?style=for-the-badge&logo=bilibili)](https://www.bilibili.com/video/BV16GEb6aEWS/)
 
+> 体验地址：https://aienglish-production-c27e.up.railway.app/
 > 视频链接：https://www.bilibili.com/video/BV16GEb6aEWS/
 
 ---
