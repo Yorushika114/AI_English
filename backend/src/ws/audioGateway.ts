@@ -96,6 +96,11 @@ export function attachAudioGateway(server: http.Server): void {
       ])
         .then(([feedback, { score, phonemes }, prosody]) => {
           feedback.pronunciationScore = score
+          if (phonemes.length > 0) {
+            feedback.phonemeAccuracyScore = Math.round(
+              phonemes.reduce((sum, w) => sum + w.accuracyScore, 0) / phonemes.length
+            )
+          }
           userMsg.feedback = feedback
           userMsg.phonemicsData = {
             isePhonemes: phonemes,

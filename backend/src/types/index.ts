@@ -16,6 +16,7 @@ export type Correction = {
 
 export type Feedback = {
   pronunciationScore: number
+  phonemeAccuracyScore?: number
   corrections: Correction[]
 }
 
@@ -67,7 +68,7 @@ export type PhonemeAnalysisResult = {
     expected?: string
     suggestion: string
   }
-  linkedSpeech: string[]
+  linkedSpeech: { example: string; context: string; rule: string }[]
   ieltsComment: string
   overallBand: number   // 4-9
 }

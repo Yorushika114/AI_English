@@ -142,8 +142,8 @@ Respond ONLY with valid JSON (no markdown code fences, no extra text):
       "word": "<exact word from sentence>",
       "severity": "good|warning|error",
       "ipa": "<IPA transcription e.g. /ɪmˈpɔːrtənt/>",
-      "issue": "<specific problem or null>",
-      "suggestion": "<how to fix or null>"
+      "issue": "<用中文描述具体发音问题，或 null>",
+      "suggestion": "<用中文说明如何纠正，或 null>"
     }
   ],
   "intonation": {
@@ -151,7 +151,9 @@ Respond ONLY with valid JSON (no markdown code fences, no extra text):
     "expected": "<what this sentence type needs>",
     "suggestion": "<advice in Chinese, 1-2 sentences>"
   },
-  "linkedSpeech": ["<word1> + <word2> → /<linked IPA>/"],
+  "linkedSpeech": [
+    { "example": "<linked form e.g. wanna>", "context": "<words e.g. want to>", "rule": "<rule e.g. 弱读>" }
+  ],
   "ieltsComment": "<2-3 sentences in Chinese from IELTS examiner perspective>",
   "overallBand": <integer 4-9>
 }

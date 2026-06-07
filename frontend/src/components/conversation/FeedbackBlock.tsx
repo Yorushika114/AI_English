@@ -48,8 +48,8 @@ export default function FeedbackBlock({ feedback, messageId, text, hasPhonemicsD
       animate={{ opacity: 1, height: 'auto' }}
       className="mt-3 pt-3 border-t border-gray-100 overflow-hidden"
     >
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs text-subtle font-medium">发音评分</span>
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        <span className="text-xs text-subtle font-medium">综合评分</span>
         <motion.span
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -59,6 +59,20 @@ export default function FeedbackBlock({ feedback, messageId, text, hasPhonemicsD
           {feedback.pronunciationScore}
         </motion.span>
         <span className="text-xs text-subtle">/ 100</span>
+        {feedback.phonemeAccuracyScore !== undefined && (
+          <>
+            <span className="text-xs text-subtle font-medium ml-2">音素准确率</span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className={`text-lg font-bold ${scoreColor(feedback.phonemeAccuracyScore)}`}
+            >
+              {feedback.phonemeAccuracyScore}
+            </motion.span>
+            <span className="text-xs text-subtle">/ 100</span>
+          </>
+        )}
         {feedback.corrections.length === 0 && (
           <CheckCircle size={14} className="text-success ml-auto" />
         )}

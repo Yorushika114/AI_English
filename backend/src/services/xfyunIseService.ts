@@ -33,19 +33,20 @@ export function parseIseXml(xmlStr: string): WordPhonemeData[] {
     const wordAttrs = wordMatch[1]
     const wordContent = wordMatch[2]
     const wordText = getAttr(wordAttrs, 'content')
-    const wordAcc = parseFloat(getAttr(wordAttrs, 'accuracy_score') || '0')
+    // ISE uses total_score (0-5) at word level, not accuracy_score
+    const wordAcc = parseFloat(getAttr(wordAttrs, 'total_score') || '0') * 20
     if (!wordText) continue
 
     const phonemes: PhonemeScore[] = []
-    const phoneRegex = /<phone\b([^>]*)\/>/g
-    let phoneMatch: RegExpExecArray | null
-    while ((phoneMatch = phoneRegex.exec(wordContent)) !== null) {
-      const pa = phoneMatch[1]
+    const syllRegex = /<syll\b([^>]*)>/g
+    let syllMatch: RegExpExecArray | null
+    while ((syllMatch = syllRegex.exec(wordContent)) !== null) {
+      const sa = syllMatch[1]
       phonemes.push({
-        symbol: getAttr(pa, 'content'),
-        score: parseFloat(getAttr(pa, 'accuracy_score') || '0'),
-        dpResult: parseInt(getAttr(pa, 'dp_result') || '0', 10),
-        stress: parseInt(getAttr(pa, 'stress') || '0', 10),
+        symbol: getAttr(sa, 'content'),
+        score: parseFloat(getAttr(sa, 'syll_score') || '0') * 20,
+        dpResult: parseInt(getAttr(sa, 'serr_msg') || '0', 10),
+        stress: parseInt(getAttr(sa, 'syll_accent') || '0', 10),
       })
     }
     words.push({ word: wordText, accuracyScore: wordAcc, phonemes })
