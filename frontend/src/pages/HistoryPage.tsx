@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, Trash2, CheckSquare, Square } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2, CheckSquare, Square, MessageSquarePlus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useHistoryStore } from '../store/historyStore'
+import { usePracticeStore } from '../store/practiceStore'
 import type { Session } from '../types'
 
 type SessionCardProps = {
@@ -10,9 +12,10 @@ type SessionCardProps = {
   selected: boolean
   onSelect: () => void
   onDelete: () => void
+  onResume: () => void
 }
 
-function SessionCard({ session, selectMode, selected, onSelect, onDelete }: SessionCardProps) {
+function SessionCard({ session, selectMode, selected, onSelect, onDelete, onResume }: SessionCardProps) {
   const [expanded, setExpanded] = useState(false)
   const scoreColor =
     session.avgScore >= 80 ? 'text-success' :
@@ -50,13 +53,23 @@ function SessionCard({ session, selectMode, selected, onSelect, onDelete }: Sess
           )}
         </button>
         {!selectMode && (
-          <button
-            onClick={onDelete}
-            className="shrink-0 p-2 text-subtle hover:text-error transition-colors"
-            aria-label="删除"
-          >
-            <Trash2 size={16} />
-          </button>
+          <>
+            <button
+              onClick={onResume}
+              className="shrink-0 p-2 text-subtle hover:text-primary transition-colors"
+              aria-label="继续对话"
+              title="继续对话"
+            >
+              <MessageSquarePlus size={16} />
+            </button>
+            <button
+              onClick={onDelete}
+              className="shrink-0 p-2 text-subtle hover:text-error transition-colors"
+              aria-label="删除"
+            >
+              <Trash2 size={16} />
+            </button>
+          </>
         )}
       </div>
       <AnimatePresence>
@@ -88,6 +101,13 @@ function SessionCard({ session, selectMode, selected, onSelect, onDelete }: Sess
                   )}
                 </div>
               ))}
+              <button
+                onClick={onResume}
+                className="mt-2 w-full py-2 rounded-btn border border-primary text-primary text-sm font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <MessageSquarePlus size={15} />
+                继续这次对话
+              </button>
             </div>
           </motion.div>
         )}
@@ -98,8 +118,11 @@ function SessionCard({ session, selectMode, selected, onSelect, onDelete }: Sess
 
 export default function HistoryPage() {
   const { sessions, isLoading, loadSessions, deleteSession, deleteSessions } = useHistoryStore()
+  const { resumeSession } = usePracticeStore()
+  const navigate = useNavigate()
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [resumingId, setResumingId] = useState<string | null>(null)
 
   useEffect(() => { loadSessions() }, [loadSessions])
 
@@ -134,6 +157,12 @@ export default function HistoryPage() {
     if (!window.confirm(`确认删除选中的 ${selected.size} 条练习记录？`)) return
     await deleteSessions(Array.from(selected))
     exitSelectMode()
+  }
+
+  const handleResume = async (session: Session) => {
+    setResumingId(session.id)
+    await resumeSession(session)
+    navigate('/')
   }
 
   if (isLoading) {
@@ -206,8 +235,14 @@ export default function HistoryPage() {
           selected={selected.has(s.id)}
           onSelect={() => toggleSelect(s.id)}
           onDelete={() => handleDelete(s.id)}
+          onResume={() => handleResume(s)}
         />
       ))}
+      {resumingId && (
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-subtle text-sm">正在加载对话…</div>
+        </div>
+      )}
     </div>
   )
 }

@@ -11,9 +11,11 @@ type PracticeState = {
   isRecording: boolean
   partialTranscript: string   // live STT text shown while user speaks
   streamingAiText: string     // accumulates AI reply chunks
+  resumedMessageCount: number // >0 when session was resumed from history
 
   loadScenes: () => Promise<void>
   setScene: (scene: Scene) => Promise<void>
+  resumeSession: (session: Session) => Promise<void>
   sendMessage: (text: string) => Promise<void>
   setIsRecording: (v: boolean) => void
 
@@ -36,6 +38,7 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   isRecording: false,
   partialTranscript: '',
   streamingAiText: '',
+  resumedMessageCount: 0,
 
   loadScenes: async () => {
     const scenes = await api.getScenes()
@@ -47,10 +50,34 @@ export const usePracticeStore = create<PracticeState>((set, get) => ({
   },
 
   setScene: async (scene) => {
-    set({ isLoading: true, currentScene: scene, currentSession: null, messages: [] })
+    set({ isLoading: true, currentScene: scene, currentSession: null, messages: [], resumedMessageCount: 0 })
     try {
       const session = await api.createSession(scene.id)
       set({ currentSession: session, isLoading: false })
+    } catch {
+      set({ isLoading: false })
+    }
+  },
+
+  resumeSession: async (session) => {
+    set({ isLoading: true })
+    try {
+      let sceneList = get().scenes
+      if (sceneList.length === 0) {
+        sceneList = await api.getScenes()
+        set({ scenes: sceneList })
+      }
+      const scene = sceneList.find(s => s.id === session.sceneId) ?? null
+      const fresh = await api.getSession(session.id)
+      set({
+        currentScene: scene,
+        currentSession: fresh,
+        messages: fresh.messages,
+        resumedMessageCount: fresh.messages.length,
+        isLoading: false,
+        streamingAiText: '',
+        partialTranscript: '',
+      })
     } catch {
       set({ isLoading: false })
     }
